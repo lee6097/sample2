@@ -1,30 +1,129 @@
-<!doctype html> <html lang="ko"> <head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width,initial-scale=1"> <title>EMR-style Viewer (safe)</title> <style> :root{--bg:#0f2a3a;--bg2:#163b52;--ink:#e8f2fa;--muted:#9fb6c8;--panel:#102938;--border:#2a4a61;--paper:#fff;--ink2:#222;--shadow:0 2px 8px rgba(0,0,0,.2)} *{box-sizing:border-box} html,body{height:100%} body{margin:0;font-family:system-ui,"Noto Sans KR",Arial,sans-serif;background:#0b2231;color:var(--ink)} button{border:0;background:#22475f;color:#d8ecf8;padding:.45rem .6rem;border-radius:6px;cursor:pointer} button:disabled{opacity:.5;cursor:not-allowed} .app{height:100%;display:grid;grid-template-columns:320px 72px 1fr} .sidebar-left{background:linear-gradient(180deg,var(--bg),var(--bg2));border-right:1px solid var(--border);display:flex;flex-direction:column;min-width:240px} .patient-header{padding:12px;border-bottom:1px solid var(--border)} .brand{font-weight:700;color:#bfe4ff;margin-bottom:8px} .search{display:flex;gap:6px} .search input{flex:1;padding:.5rem .6rem;border-radius:6px;border:1px solid var(--border);background:#0c2636;color:var(--ink)} .patient-card{margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:8px;background:#0e2b3e} .patient-card .grade{display:inline-block;background:#385a6f;padding:2px 6px;border-radius:4px;font-weight:700;font-size:.85rem} .patient-card .name{font-size:1.2rem;font-weight:700;margin-top:6px} .patient-card .meta{color:var(--muted);font-size:.85rem} .patient-card .line{height:1px;background:var(--border);margin:8px 0} .patient-card .stats{display:flex;gap:8px;flex-wrap:wrap;color:#cfe6f5} .timeline{flex:1;overflow:auto;padding:8px} .timeline-title{font-weight:700;color:#c6e6ff;margin:4px 0 6px 4px} .timeline-list{list-style:none;margin:0;padding:0} .timeline-item{display:grid;grid-template-columns:42px 1fr;gap:8px;padding:8px;border-radius:8px;cursor:pointer} .timeline-item:hover{background:#12364c} .timeline-item.active{background:#17435c;border:1px solid #2e5d79} .timeline-item .dot{width:14px;height:14px;border-radius:50%;background:#4cc3ff;margin-top:4px;box-shadow:0 0 0 3px rgba(76,195,255,.15)} .timeline-item .date{color:#cde7fb;font-weight:700;font-size:.95rem} .timeline-item .sub{color:#9fc1d7;font-size:.8rem} .sidebar-mid{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column} .mid-top{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--border)} .mid-top .year{color:#c6e6ff;font-weight:700} .mid-nav{display:flex;flex-direction:column;padding:6px;gap:6px} .tab-btn{background:#16384d;color:#cfe7f7;border:1px solid var(--border);padding:.55rem .4rem;border-radius:8px} .tab-btn.active{background:#1e506b} .viewer{display:flex;flex-direction:column;min-width:0;background:#0e2432} .topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--border);background:#0e2b3e} .tabs{display:flex;gap:6px;flex-wrap:wrap} .top-tab{background:#173f57;color:#cfe7f7;border:1px solid var(--border);padding:.45rem .6rem;border-radius:999px} .toolbar{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--border);background:#0f2a3a} .tool{background:#1d4f6b} .pages-wrap{flex:1;overflow:auto;padding:14px;background:#0e2432} .pages{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;align-items:start} .page{position:relative;width:820px;height:1120px;background:var(--paper);color:var(--ink2);padding:24px 28px;box-shadow:var(--shadow);border-radius:4px;transform-origin:top left} .page h1{font-size:1.1rem;margin:0 0 8px} .page h2{font-size:1rem;margin:12px 0 6px} .page .small{font-size:.9rem;color:#333} .page .muted{color:#666} .page footer{position:absolute;bottom:16px;left:0;right:0;text-align:center;color:#666;font-size:.85rem} .app.collapsed-left{grid-template-columns:0 72px 1fr} .app.collapsed-left .sidebar-left{display:none} @media (max-width:1700px){.page{width:740px;height:1012px}} @media (max-width:1500px){.pages{grid-template-columns:1fr}} </style> </head> <body> <div class="app"> <aside class="sidebar-left"> <div class="patient-header"> <div class="brand">병동뷰</div> <div class="search"> <input id="searchInput" placeholder="환자번호/이름 검색"> <button id="searchBtn">🔍</button> </div> <div class="patient-card"> <div class="grade">B+</div> <div class="name">홍길동</div> <div class="meta">F/44세 8개월</div> <div class="line"></div> <div class="stats"><div><span>HD</span>16</div><div><span>ERN</span>Pod</div><div><span>주치</span>손정우</div></div> </div> </div> <div class="timeline"> <div class="timeline-title">내원 이력</div> <ul id="timelineList" class="timeline-list"></ul> </div> <div class="sidebar-actions"><button id="collapseLeft">◀ 접기</button></div> </aside> <aside class="sidebar-mid"> <div class="mid-top"> <button id="expandLeft">▶</button> <div class="year">2025</div> </div> <nav class="mid-nav"> <button class="tab-btn active" data-tab="all">경과전체</button> <button class="tab-btn" data-tab="외래">외래</button> <button class="tab-btn" data-tab="입원">입원기록</button> <button class="tab-btn" data-tab="재진">재진</button> </nav> </aside> <main class="viewer"> <header class="topbar"> <div class="tabs"> <button class="top-tab">경과전체</button><button class="top-tab">의사처방</button> <button class="top-tab">입원기록</button><button class="top-tab">영상</button> <button class="top-tab">협진</button><button class="top-tab">간호기록</button> </div> <div class="window-btns"><button>⚙</button><button>?</button></div> </header>
-<div class="toolbar">
-  <div>
-    <button class="tool" id="btnFirst">⏮</button>
-    <button class="tool" id="btnPrev">◀</button>
-    <span id="pageInfo">1 / 1</span>
-    <button class="tool" id="btnNext">▶</button>
-    <button class="tool" id="btnLast">⏭</button>
-  </div>
-  <div>
-    <button class="tool" id="btnZoomOut">➖</button>
-    <span id="zoomInfo">100%</span>
-    <button class="tool" id="btnZoomIn">➕</button>
-    <button class="tool" id="btnPrint">🖨</button>
-  </div>
+<!doctype html> <html lang="ko"> <head> <meta charset="utf-8" /> <meta name="viewport" content="width=device-width,initial-scale=1" /> <title>의무기록 뷰어(샘플)</title> <style> :root{ --bg-1:#0f2a3a; --bg-2:#183e53; --bg-3:#20556f; --rail:#1f506b; --accent:#4fc3f7; --accent-2:#7dd3fc; --line:#2f6a86; --text:#e6f1f6; --muted:#9fb7c3; --chip:#104257; --tab:#0e3a4f; --tab-active:#ffffff; --tab-text:#cfe7f3; --main:#f4f7fa; --card:#ffffff; --border:#dfe7ee; } *{box-sizing:border-box} html,body{height:100%} body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,"Malgun Gothic",sans-serif; color:#12232e; background:linear-gradient(160deg,var(--bg-1),var(--bg-2)); overflow:hidden; } #app{display:flex;height:100vh;width:100vw}
+/* Left sidebar */
+.left{
+width:320px;flex:0 0 320px;
+background:linear-gradient(180deg,var(--bg-2),#16394c);
+color:var(--text);
+display:flex;flex-direction:column;
+border-right:1px solid #0c2a3a66;
+}
+.search{
+padding:14px 12px;border-bottom:1px solid #0c2a3a66;
+}
+.row{display:flex;gap:8px;align-items:center}
+.search input{
+flex:1;padding:10px 12px;border-radius:8px;border:1px solid #22495f;background:#0f2e40;color:#d9eef9;
+outline:none;
+}
+.btn{
+background:#0f2e40;color:#cfe7f3;border:1px solid #22495f;border-radius:8px;padding:9px 10px;cursor:pointer;
+}
+.btn:hover{filter:brightness(1.1)}
+.patient{
+padding:12px;border-bottom:1px solid #0c2a3a66;min-height:82px;
+}
+.patient .name{font-weight:700;font-size:18px}
+.patient .meta{margin-top:6px;color:var(--muted);font-size:13px;display:flex;gap:12px;flex-wrap:wrap}
+.timeline{padding:8px 8px 12px;overflow:auto;flex:1}
+.year{color:#8fb4c8;font-weight:600;margin:8px 0 4px 6px;font-size:12px}
+.tl-item{
+display:flex;gap:10px;align-items:flex-start;
+padding:10px;border-radius:10px;cursor:pointer;border:1px solid transparent;
+}
+.tl-item:hover{background:#0f2e4030;border-color:#2a5a70}
+.tl-item.active{background:#0f2e4055;border-color:#2a5a70}
+.dot{
+width:12px;height:12px;border-radius:50%;margin-top:5px;background:#6ec1e4;border:2px solid #0b2b3a;
+}
+.tl-main{flex:1;min-width:0}
+.tl-top{display:flex;justify-content:space-between;gap:6px}
+.date{color:#cde6f3;font-weight:700}
+.badge{
+background:#0e3a4f;color:#aee2ff;border:1px solid #2f6a86;padding:2px 6px;border-radius:999px;font-size:11px
+}
+.tl-sub{color:#9fc3d4;font-size:12px;margin-top:3px}
+
+/* Middle rail */
+.rail{
+width:120px;flex:0 0 120px;background:linear-gradient(180deg,var(--rail),#1a435a);
+border-right:1px solid #0c2a3a66;color:var(--text);display:flex;flex-direction:column;overflow:auto
+}
+.rail-section{padding:10px 8px}
+.rail-title{font-size:12px;color:#9ec2d3;margin:6px 4px 8px;font-weight:700;letter-spacing:.5px}
+.rail-btn{
+width:100%;text-align:left;padding:10px 10px;margin:4px 4px;border-radius:8px;border:1px solid #2c5f78;background:#0f2e40;color:#cfe7f3;cursor:pointer;font-size:13px
+}
+.rail-btn.active,.rail-btn:hover{background:#13435a}
+.divider{height:1px;background:#0c2a3a66;margin:8px 6px}
+
+/* Main content */
+.main{flex:1;display:flex;flex-direction:column;background:var(--main);position:relative}
+.empty{
+margin:auto;color:#8aa2b0;text-align:center;font-size:14px;user-select:none
+}
+.topbar{display:none;align-items:center;gap:10px;padding:8px 12px;background:#eef4f8;border-bottom:1px solid var(--border)}
+.crumb{font-size:13px;color:#5a7689}
+.crumb b{color:#183e53}
+.period{margin-left:auto;color:#7b95a5;font-size:12px}
+
+.subtabs{display:none;gap:4px;padding:8px 8px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#e9f3f8,#eaf2f7)}
+.tab{
+padding:8px 10px;border-radius:8px;border:1px solid #c8d9e4;background:#f0f7fb;color:#38586b;font-size:13px;cursor:pointer
+}
+.tab.active{background:#1775a8;color:white;border-color:#166d9b}
+.content{display:none;flex:1;overflow:auto;padding:12px}
+.doc{
+background:var(--card);border:1px solid var(--border);border-radius:10px;min-height:280px;padding:16px 18px;color:#1b2a36;line-height:1.55
+}
+.doc h3{margin:0 0 12px 0;border-bottom:1px solid #eef2f6;padding-bottom:8px;color:#183e53}
+.placeholder{color:#688295}
+
+/* In-page popup (profiles) */
+.popup{
+position:absolute;right:20px;top:20px;width:min(860px,70vw);height:min(560px,70vh);
+background:white;border:1px solid #cfd9e2;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.18);
+display:none;flex-direction:column;overflow:hidden;z-index:10
+}
+.popup-header{
+display:flex;align-items:center;gap:10px;background:#10384e;color:#d6edf8;padding:10px 12px;border-bottom:1px solid #0b2a3a
+}
+.popup-title{font-weight:700}
+.popup-close{margin-left:auto;background:#0f2e40;color:#cfe7f3;border:1px solid #2c5f78;border-radius:8px;padding:6px 10px;cursor:pointer}
+.popup-tabs{display:flex;gap:6px;padding:8px;background:#e9f2f7;border-bottom:1px solid #d7e4ed;flex-wrap:wrap}
+.popup-tab{padding:6px 10px;border-radius:999px;border:1px solid #c9dbe6;background:#f6fbff;color:#2d5368;font-size:12px;cursor:pointer}
+.popup-tab.active{background:#1775a8;color:white;border-color:#1775a8}
+.popup-body{flex:1;overflow:auto;padding:12px}
+.popup-card{background:white;border:1px solid #e3edf4;border-radius:10px;min-height:200px;padding:14px}
+
+/* small helpers */
+.muted{color:#7a9bae}
+</style>
+
+</head> <body> <div id="app"> <!-- Left sidebar --> <aside class="left"> <div class="search"> <div class="row"> <input id="searchInput" placeholder="환자번호" /> <button class="btn" id="btnSearch">검색</button> </div> </div> <div class="patient" id="patientBox"> <div class="muted">환자번호를 검색하세요.</div> </div> <div class="timeline" id="timeline"></div> </aside> <!-- Middle rail --> <aside class="rail"> <div class="rail-section" id="midBtns"> <div class="rail-title">중분류</div> <!-- JS로 외래/병동/응급/통합/다학제 버튼 채움 --> </div> <div class="divider"></div> <div class="rail-section" id="profileMenu"> <div class="rail-title">프로필</div> <!-- JS로 프로필 버튼 채움 --> </div> </aside> <!-- Main area --> <main class="main"> <div class="empty" id="emptyMsg">왼쪽에서 날짜(대분류)를 선택하고, 가운데에서 중분류를 선택하세요.</div>
+<div class="topbar" id="topbar">
+  <div class="crumb">선택: <b id="crumbDate">-</b> · <b id="crumbDept">-</b> · <b id="crumbMid">-</b></div>
+  <div class="period" id="periodText">기간: -</div>
 </div>
 
-<section id="pagesWrap" class="pages-wrap"></section>
-</main> </div> <!-- 페이지 템플릿: 스크립트 밖에서 정의(문자열 파싱 문제 없음) --> <template id="page-tpl"> <div class="page"> <h1 class="title"></h1> <div class="small muted page-num"></div> <h2>경과 내용</h2> <ul> <li>S) 피로감, 식욕저하, 상복부 불쾌감</li> <li>O) V/S 안정, Abd soft, mild epigastric tenderness</li> <li>A) Dyspepsia r/o GERD, Mild transaminitis</li> <li>P) PPI 유지, 식이/생활습관 교정, 필요 시 추가검사</li> </ul> <h2>평가/계획</h2> <ul> <li>경험적 항생제 유지, 수액/전해질 교정</li> <li>필요 시 내시경/영상 추가</li> </ul> <footer class="footer"></footer> </div> </template> <script> const data = [ { id:'2025-11-11', type:'외래', title:'2025-11-11 외래 경과', total:3 }, { id:'2025-10-17', type:'입원', title:'2025-10-17 입원 초기평가', total:6 }, { id:'2024-08-01', type:'외래', title:'2024-08-01 외래 경과', total:2 }, { id:'2024-06-04', type:'외래', title:'2024-06-04 상담', total:1 }, { id:'2024-03-07', type:'재진', title:'2024-03-07 재진 소견', total:1 } ]; let filter = 'all'; let filtered = data.slice(); let current = filtered[0]; let pageIndex = 0; // 0,2,4.. 두 페이지 단위 let zoom = 1; const appEl = document.querySelector('.app'); const pagesWrap = document.getElementById('pagesWrap'); const pageInfo = document.getElementById('pageInfo'); const zoomInfo = document.getElementById('zoomInfo'); function renderTimeline(){ const ul = document.getElementById('timelineList'); ul.innerHTML = ''; filtered.forEach(item=>{ const li = document.createElement('li'); li.className = 'timeline-item' + (current && current.id===item.id?' active':''); li.innerHTML = '<div class="dot"></div>' + '<div><div class="date">'+item.id+'</div>' + '<div class="sub">'+item.type+' <span class="badge"></span></div>' + '<div class="sub">'+item.title+'</div></div>'; li.onclick = ()=>{ current = item; pageIndex = 0; renderTimeline(); renderPages(); }; ul.appendChild(li); }); } function clonePage(n){ const frag = document.getElementById('page-tpl').content.cloneNode(true); frag.querySelector('.title').innerText = current.title; frag.querySelector('.page-num').innerText = 'Page ' + n; frag.querySelector('.footer').innerText = 'Page(' + n + ')'; return frag; } function renderPages(){ if(!current){ updateNav(); return; } pagesWrap.innerHTML = ''; const grid = document.createElement('div'); grid.className = 'pages'; const p1 = pageIndex + 1; const p2 = pageIndex + 2; if(p1 <= current.total) grid.appendChild(clonePage(p1)); if(p2 <= current.total) grid.appendChild(clonePage(p2)); pagesWrap.appendChild(grid); pagesWrap.querySelectorAll('.page').forEach(p=>{ p.style.transform = 'scale('+zoom+')'; }); const end = Math.min(p2, current.total); pageInfo.textContent = p1 + ' - ' + end + ' / ' + current.total; zoomInfo.textContent = Math.round(zoom*100) + '%'; updateNav(); } function updateNav(){ const total = current ? current.total : 0; const atStart = !current || pageIndex<=0; const atEnd = !current || (pageIndex+2>=total); document.getElementById('btnPrev').disabled = atStart; document.getElementById('btnFirst').disabled = atStart; document.getElementById('btnNext').disabled = atEnd; document.getElementById('btnLast').disabled = atEnd; } function applyFilter(){ filtered = (filter==='all') ? data.slice() : data.filter(x=>x.type===filter); current = filtered[0]; pageIndex = 0; renderTimeline(); renderPages(); } // 이벤트 document.getElementById('btnPrev').onclick = ()=>{ pageIndex = Math.max(0, pageIndex-2); renderPages(); }; document.getElementById('btnNext').onclick = ()=>{ pageIndex = Math.min(current.total-2, pageIndex+2); renderPages(); }; document.getElementById('btnFirst').onclick = ()=>{ pageIndex = 0; renderPages(); }; document.getElementById('btnLast').onclick = ()=>{ pageIndex = Math.max(0, current.total-2); renderPages(); }; document.getElementById('btnZoomIn').onclick = ()=>{ zoom = Math.min(2, +(zoom+0.1).toFixed(2)); renderPages(); }; document.getElementById('btnZoomOut').onclick = ()=>{ zoom = Math.max(0.5, +(zoom-0.1).toFixed(2)); renderPages(); }; document.getElementById('btnPrint').onclick = ()=>{ if(!current) return; const w = window.open('', '_blank'); w.document.write('<html><head><title>Print</title><style>body{margin:0;font-family:system-ui,Arial}.page{width:794px;min-height:1123px;margin:0 auto 16px;padding:24px;box-sizing:border-box;border:1px solid #ddd;page-break-after:always}</style></head><body>');
-for(let i=1;i<=current.total;i++){ w.document.body.appendChild(clonePage(i)); }
-w.document.write('</body></html>'); w.document.close(); w.focus(); w.print();
-};
-document.getElementById('collapseLeft').onclick = ()=>{ appEl.classList.add('collapsed-left'); };
-document.getElementById('expandLeft').onclick   = ()=>{ appEl.classList.remove('collapsed-left'); };
-document.querySelectorAll('.tab-btn').forEach(b=> b.onclick = ()=>{ document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); filter = b.dataset.tab; applyFilter(); });
+<div class="subtabs" id="subtabs"></div>
 
-applyFilter();
-</script>
+<section class="content" id="content">
+  <div class="doc" id="doc">
+    <!-- 소분류 내용 -->
+  </div>
+</section>
 
-</body> </html>
+<!-- In-page popup for Profile items -->
+<div class="popup" id="popup">
+  <div class="popup-header">
+    <div class="popup-title" id="popupTitle">프로필</div>
+    <button class="popup-close" id="popupClose">닫기</button>
+  </div>
+  <div class="popup-tabs" id="popupTabs"></div>
+  <div class="popup-body">
+    <div class="popup-card" id="popupContent">
+      <!-- 프로필 내용 -->
+    </div>
+  </div>
+</div>
+</main> </div> <script> /* ============================= 데이터 넣는 곳(예시) - 실제 내용은 text 자리에 입력하세요. - 환자를 추가하려면 patients 객체에 같은 구조로 추가. ============================= */ const midToSubs = { "외래": ["처방","초진","재진"], "병동": ["경과전체","의사처방","입원기록","임상관찰","수혈기록","영양기록","퇴원요약","협진기록","동의서","초기평가(일반)"], "응급": ["의사처방","ER","간호기록","동의서","과거기록","응급실전문의기록","초기평가(응급)","임상관찰"], "통합": ["경과전체","의사처방","입원기록","임상관찰","수혈기록","영양기록","퇴원요약","협진기록","동의서","초기평가(일반)"], "다학제": ["다학제"] }; const profileItems = ["OCS","환자정보","검사결과","PACS","CIS","상병이력","수술이력","타병원(외부)","처방조회","진료요약","통합치료요약","퇴원요약(전체)"]; const patients = { "01076990": { id:"01076990", name:"홍길동", gender:"M", age:44, blood:"B+", attending:"김주치", period:"2025.10.17 ~ 2025.11.01", episodes:[ { date:"2025-11-11", dept:"외래", code:"NP", records:{ "외래":{ "처방":"여기에 처방 내용 입력", "초진":"여기에 초진 내용 입력", "재진":"여기에 재진 내용 입력" }, "병동":{ "경과전체":"여기에 경과전체 내용 입력", "의사처방":"여기에 의사처방 내용 입력", "입원기록":"여기에 입원기록 내용 입력", "임상관찰":"여기에 임상관찰 내용 입력", "수혈기록":"여기에 수혈기록 내용 입력", "영양기록":"여기에 영양기록 내용 입력", "퇴원요약":"여기에 퇴원요약 내용 입력", "협진기록":"여기에 협진기록 내용 입력", "동의서":"여기에 동의서 내용 입력", "초기평가(일반)":"여기에 초기평가(일반) 내용 입력" }, "응급":{ "의사처방":"여기에 의사처방(응급) 내용 입력", "ER":"여기에 ER 내용 입력", "간호기록":"여기에 간호기록(응급) 내용 입력", "동의서":"여기에 동의서(응급) 내용 입력", "과거기록":"여기에 과거기록(응급) 내용 입력", "응급실전문의기록":"여기에 응급실전문의기록 내용 입력", "초기평가(응급)":"여기에 초기평가(응급) 내용 입력", "임상관찰":"여기에 임상관찰(응급) 내용 입력" }, "통합":{ "경과전체":"여기에 통합-경과전체 내용 입력" }, "다학제":{"다학제":"여기에 다학제 내용 입력"} } }, { date:"2025-10-17", dept:"GE", code:"GE", records:{ "병동":{ "경과전체":"여기에 경과전체 내용 입력(예: 2025-10-17 에피소드)", "의사처방":"여기에 의사처방 내용 입력", "입원기록":"여기에 입원기록 내용 입력" }, "응급":{ "ER":"여기에 ER 내용 입력(10/17)" }, "외래":{ "처방":"여기에 처방 내용 입력(10/17)" } } } ], profiles:{ "OCS":"여기에 OCS 내용 입력", "환자정보":"여기에 환자정보 내용 입력", "검사결과":"여기에 검사결과 내용 입력", "PACS":"여기에 PACS 내용 입력", "CIS":"여기에 CIS 내용 입력", "상병이력":"여기에 상병이력 내용 입력", "수술이력":"여기에 수술이력 내용 입력", "타병원(외부)":"여기에 타병원(외부) 내용 입력", "처방조회":"여기에 처방조회 내용 입력", "진료요약":"여기에 진료요약 내용 입력", "통합치료요약":"여기에 통합치료요약 내용 입력", "퇴원요약(전체)":"여기에 퇴원요약(전체) 내용 입력" } }, "02000002":{ id:"02000002", name:"이샘플", gender:"F", age:58, blood:"A+", attending:"박주치", period:"2024.08.01 ~ 2024.08.20", episodes:[ {date:"2024-08-11", dept:"응급", code:"ER", records:{ "응급":{"ER":"여기에 ER 내용 입력(2024-08-11)"} }}, {date:"2024-08-01", dept:"외래", code:"OP", records:{ "외래":{"초진":"여기에 초진 내용 입력(2024-08-01)"} }}, ], profiles:{ "OCS":"OCS 예시", "환자정보":"환자정보 예시", "검사결과":"검사결과 예시", "PACS":"PACS 예시", "CIS":"CIS 예시", "상병이력":"상병이력 예시", "수술이력":"수술이력 예시", "타병원(외부)":"타병원 예시", "처방조회":"처방조회 예시", "진료요약":"진료요약 예시", "통합치료요약":"통합치료요약 예시", "퇴원요약(전체)":"퇴원요약 예시" } } }; /* ============================= 상태 ============================= */ let currentPatient = null; let currentEpisodeIndex = null; // 타임라인에서 선택한 인덱스 let currentMid = null; // 외래/병동/응급/통합/다학제 let currentSub = null; // 소분류 let popupActiveTab = null; /* ============================= 초기 UI 구성 ============================= */ const midContainer = document.getElementById('midBtns'); const profileContainer = document.getElementById('profileMenu'); const timelineEl = document.getElementById('timeline'); const patientBox = document.getElementById('patientBox'); const emptyMsg = document.getElementById('emptyMsg'); const topbar = document.getElementById('topbar'); const subtabs = document.getElementById('subtabs'); const content = document.getElementById('content'); const doc = document.getElementById('doc'); const crumbDate = document.getElementById('crumbDate'); const crumbDept = document.getElementById('crumbDept'); const crumbMid = document.getElementById('crumbMid'); const periodText = document.getElementById('periodText'); const popup = document.getElementById('popup'); const popupTitle = document.getElementById('popupTitle'); const popupTabs = document.getElementById('popupTabs'); const popupContent = document.getElementById('popupContent'); function buildMidButtons(){ const mids = Object.keys(midToSubs); mids.forEach(m=>{ const b=document.createElement('button'); b.className='rail-btn'; b.textContent=m; b.addEventListener('click',()=>{ if(!currentPatient || currentEpisodeIndex===null){ alert('날짜(대분류)를 먼저 선택하세요.'); return; } selectMid(m); }); midContainer.appendChild(b); }); } function buildProfileButtons(){ profileItems.forEach(p=>{ const b=document.createElement('button'); b.className='rail-btn'; b.textContent=p; b.addEventListener('click',()=>openProfile(p)); profileContainer.appendChild(b); }); } /* ============================= 검색/로드 ============================= */ document.getElementById('btnSearch').addEventListener('click',doSearch); document.getElementById('searchInput').addEventListener('keydown',e=>{ if(e.key==='Enter') doSearch(); }); function doSearch(){ const id = document.getElementById('searchInput').value.trim(); const p = patients[id]; if(!p){ currentPatient=null; currentEpisodeIndex=null; currentMid=null; currentSub=null; patientBox.innerHTML='<div class="muted">검색 결과가 없습니다.</div>'; timelineEl.innerHTML=''; showEmpty(); return; } currentPatient = p; currentEpisodeIndex=null; currentMid=null; currentSub=null; renderPatientHeader(p); renderTimeline(p); showEmpty(); } function renderPatientHeader(p){ patientBox.innerHTML = ` <div class="name">${p.name} <span class="muted" style="font-weight:400">(${p.id})</span></div> <div class="meta"> <span>${p.gender==='M'?'M':'F'}/${p.age}세</span> <span>혈액형 ${p.blood}</span> <span>주치의 ${p.attending}</span> <span class="muted">재원/진료 기간: ${p.period||'-'}</span> </div> `; } function renderTimeline(p){ // 최근일자부터 정렬 const eps = [...p.episodes].sort((a,b)=>a.date<b.date?1:-1); p._sortedEpisodes = eps; timelineEl.innerHTML=''; let lastYear = null; eps.forEach((ep,idx)=>{ const y = ep.date.slice(0,4); if(y!==lastYear){ const yEl = document.createElement('div'); yEl.className='year'; yEl.textContent=y; timelineEl.appendChild(yEl); lastYear = y; } const item = document.createElement('div'); item.className='tl-item'; item.dataset.index=idx; item.innerHTML=` <div class="dot"></div> <div class="tl-main"> <div class="tl-top"> <div class="date">${ep.date}</div> <div class="badge">${ep.code}</div> </div> <div class="tl-sub">${ep.dept}</div> </div>`; item.addEventListener('click',()=>selectEpisode(idx,item)); timelineEl.appendChild(item); }); } function selectEpisode(idx, itemEl){ currentEpisodeIndex = idx; currentMid=null; currentSub=null; [...timelineEl.querySelectorAll('.tl-item')].forEach(e=>e.classList.remove('active')); itemEl.classList.add('active'); updateTopBar(); showEmpty(); // 아직 중분류 선택 전이므로 비움 } /* ============================= 상단바/소분류/내용 렌더링 ============================= */ function updateTopBar(){ if(!currentPatient || currentEpisodeIndex===null) return; const ep = currentPatient._sortedEpisodes[currentEpisodeIndex]; crumbDate.textContent = ep.date; crumbDept.textContent = ep.code; crumbMid.textContent = currentMid || '-'; topbar.style.display='flex'; // 표시용 기간: 다음 진료일 전 const next = currentPatient._sortedEpisodes[currentEpisodeIndex-1]; periodText.textContent = `기간: ${ep.date} ~ ${next? '다음 진료일 전('+next.date+' 이전)':'다음 진료일 전'}`; } function selectMid(mid){ currentMid = mid; currentSub = midToSubs[mid][0]; // 첫 번째 소분류 기본 선택 // 중분류 버튼 active 표시 [...midContainer.querySelectorAll('.rail-btn')].forEach(b=>{ b.classList.toggle('active', b.textContent===mid); }); buildSubtabs(); renderContent(); updateTopBar(); hideEmpty(); } function buildSubtabs(){ subtabs.innerHTML=''; const subs = midToSubs[currentMid] || []; subs.forEach(s=>{ const t=document.createElement('button'); t.className='tab'+(s===currentSub?' active':''); t.textContent=s; t.addEventListener('click',()=>{ currentSub=s; buildSubtabs(); // active 갱신 renderContent(); updateTopBar(); }); subtabs.appendChild(t); }); subtabs.style.display='flex'; } function renderContent(){ const ep = currentPatient._sortedEpisodes[currentEpisodeIndex]; // 내용 찾기 const txt = (((ep.records||{})[currentMid]||{})[currentSub]) || `여기에 ${currentSub} 내용 입력`; doc.innerHTML = ` <h3>${currentMid} · ${currentSub}</h3> <div class="placeholder">${txt}</div> `; content.style.display='flex'; } function showEmpty(){ emptyMsg.style.display='block'; content.style.display='none'; subtabs.style.display='none'; topbar.style.display = (currentPatient && currentEpisodeIndex!==null)?'flex':'none'; } function hideEmpty(){ emptyMsg.style.display='none'; } /* ============================= 프로필 팝업 - 왼쪽 타임라인/중분류와 무관하게 열고 닫음 ============================= */ function buildPopupTabs(active){ popupTabs.innerHTML=''; profileItems.forEach(name=>{ const b=document.createElement('button'); b.className='popup-tab'+(name===active?' active':''); b.textContent=name; b.addEventListener('click',()=>openProfile(name,true)); popupTabs.appendChild(b); }); } function openProfile(name, keepOpen){ if(!currentPatient){ alert('먼저 환자번호를 검색하세요.'); return; } popupActiveTab=name; popupTitle.textContent = name; buildPopupTabs(name); const txt = (currentPatient.profiles||{})[name] || `여기에 ${name} 내용 입력`; popupContent.textContent = txt; popup.style.display='flex'; if(!keepOpen){ // 열린 상태에서 다른 버튼으로 들어와도 그대로 유지 } } document.getElementById('popupClose').addEventListener('click',()=>{ popup.style.display='none'; }); /* ============================= 시작 ============================= */ buildMidButtons(); buildProfileButtons(); // 데모 편의: 기본 입력값 document.getElementById('searchInput').value='01076990'; </script> </body> </html>
