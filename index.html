@@ -1,363 +1,634 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>의무기록 뷰어(샘플)</title>
+<meta charset="UTF-8">
+<title>병동뷰 모의 페이지</title>
 <style>
   :root{
-    --bg-1:#0f2a3a; --bg-2:#183e53; --rail:#1f506b;
-    --text:#e6f1f6; --muted:#9fb7c3; --accent:#4fc3f7;
-    --main:#f4f7fa; --card:#ffffff; --border:#dfe7ee;
+    --navy-900:#061528;
+    --navy-800:#0c2137;
+    --navy-700:#12314c;
+    --accent:#2db1ff;
+    --accent-dark:#1f6fa5;
+    --text-light:#f6f9ff;
+    --text-muted:#90a8bf;
   }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Malgun Gothic,sans-serif;background:linear-gradient(160deg,var(--bg-1),var(--bg-2));color:#12232e;overflow:hidden}
-  #app{display:flex;height:100vh;width:100vw}
+  *{box-sizing:border-box;font-family:"Noto Sans KR","Segoe UI",sans-serif;}
+  body{margin:0;background:#08182a;color:var(--text-light);height:100vh;display:flex;}
+  .app{flex:1;display:flex;min-height:100vh;}
 
-  /* Left */
-  .left{width:320px;flex:0 0 320px;background:linear-gradient(180deg,#183e53,#16394c);color:var(--text);display:flex;flex-direction:column;border-right:1px solid #0c2a3a66}
-  .search{padding:14px 12px;border-bottom:1px solid #0c2a3a66}
-  .row{display:flex;gap:8px;align-items:center}
-  .search input{flex:1;padding:10px 12px;border-radius:8px;border:1px solid #22495f;background:#0f2e40;color:#d9eef9;outline:none}
-  .btn{background:#0f2e40;color:#cfe7f3;border:1px solid #22495f;border-radius:8px;padding:9px 10px;cursor:pointer}
-  .btn:hover{filter:brightness(1.1)}
-  .patient{padding:12px;border-bottom:1px solid #0c2a3a66;min-height:82px}
-  .patient .name{font-weight:700;font-size:18px}
-  .patient .meta{margin-top:6px;color:var(--muted);font-size:13px;display:flex;gap:12px;flex-wrap:wrap}
-  .timeline{padding:8px 8px 12px;overflow:auto;flex:1}
-  .year{color:#8fb4c8;font-weight:600;margin:8px 0 4px 6px;font-size:12px}
-  .tl-item{display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:10px;cursor:pointer;border:1px solid transparent}
-  .tl-item:hover{background:#0f2e4030;border-color:#2a5a70}
-  .tl-item.active{background:#0f2e4055;border-color:#2a5a70}
-  .dot{width:12px;height:12px;border-radius:50%;margin-top:5px;background:#6ec1e4;border:2px solid #0b2b3a}
-  .tl-main{flex:1;min-width:0}
-  .tl-top{display:flex;justify-content:space-between;gap:6px}
-  .date{color:#cde6f3;font-weight:700}
-  .badge{background:#0e3a4f;color:#aee2ff;border:1px solid #2f6a86;padding:2px 6px;border-radius:999px;font-size:11px}
-  .tl-sub{color:#9fc3d4;font-size:12px;margin-top:3px}
+  /* ---------- LEFT PANEL ---------- */
+  .sidebar{
+    width:360px;
+    background:linear-gradient(180deg,#14314b 0%,#08192b 100%);
+    padding:18px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    border-right:1px solid rgba(0,0,0,.6);
+  }
+  .search-row{display:flex;align-items:center;gap:10px;}
+  .search-label{
+    font-size:15px;
+    font-weight:600;
+    color:var(--text-light);
+    min-width:70px;
+  }
+  .search-box{
+    flex:0 0 50%;   /* 폭을 정확히 50%로 고정 */
+    max-width:50%;
+    min-width:150px;
+    display:flex;
+    gap:8px;
+  }
+  .search-box input{
+    flex:1;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:6px;
+    padding:10px 12px;
+    background:#031423;
+    color:var(--text-light);
+    font-size:15px;
+  }
+  .search-box button{
+    width:44px;height:40px;border:none;border-radius:6px;
+    background:var(--accent);color:#042133;font-size:18px;font-weight:700;cursor:pointer;
+  }
+  .patient-card{
+    display:none;
+    flex-direction:column;
+    gap:6px;
+    padding:14px;
+    border-radius:10px;
+    background:rgba(255,255,255,.05);
+    box-shadow:0 10px 25px rgba(0,0,0,.35);
+  }
+  .patient-card.active{display:flex;}
+  .patient-card .id-line{font-size:13px;color:var(--text-muted);}
+  .patient-card .name-line{font-size:22px;font-weight:600;}
+  .patient-meta{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:4px 10px;
+    font-size:13px;
+    color:var(--text-muted);
+  }
+  .history-list{
+    flex:1;
+    border-radius:10px;
+    background:rgba(0,0,0,.25);
+    padding:10px;
+    overflow:auto;
+  }
+  .history-item{
+    padding:10px 12px;
+    border-radius:8px;
+    margin-bottom:6px;
+    background:rgba(0,0,0,.2);
+    border-left:3px solid transparent;
+    cursor:pointer;
+    transition:.2s;
+  }
+  .history-item:hover{background:rgba(0,0,0,.4);}
+  .history-item.active{
+    border-left-color:var(--accent);
+    background:rgba(45,177,255,.16);
+  }
+  .history-date{font-weight:600;font-size:15px;}
+  .history-dept{font-size:12px;color:var(--text-muted);}
 
-  /* Rail */
-  .rail{width:120px;flex:0 0 120px;background:linear-gradient(180deg,var(--rail),#1a435a);border-right:1px solid #0c2a3a66;color:var(--text);display:flex;flex-direction:column;overflow:auto}
-  .rail-section{padding:10px 8px}
-  .rail-btn{width:100%;text-align:left;padding:10px 10px;margin:4px;border-radius:8px;border:1px solid #2c5f78;background:#0f2e40;color:#cfe7f3;cursor:pointer;font-size:13px}
-  .rail-btn.active,.rail-btn:hover{background:#13435a}
-  .divider{height:1px;background:#0c2a3a66;margin:8px 6px}
+  /* ---------- MIDDLE BAR ---------- */
+  .middle-bar{
+    width:120px;
+    background:#0b253a;
+    border-right:1px solid rgba(0,0,0,.6);
+    display:flex;
+    flex-direction:column;
+    padding:14px 10px;
+  }
+  .area-buttons,.profile-links{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .profile-section{
+    margin-top:28px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+  }
+  .area-btn{
+    width:100%;
+    border:none;
+    border-radius:6px;
+    padding:7px 8px;
+    background:rgba(255,255,255,.08);
+    color:var(--text-muted);
+    font-size:12px;
+    cursor:pointer;
+    text-align:left;
+  }
+  .area-btn.disabled{opacity:.35;cursor:not-allowed;}
+  .area-btn.active{
+    background:var(--accent);
+    color:#072843;
+    font-weight:600;
+  }
+  .profile-link{
+    font-size:12px;
+    color:var(--text-muted);
+    padding:5px 2px;
+    cursor:pointer;
+    border-radius:4px;
+  }
+  .profile-link:hover{color:#d8e6f5;}
+  .profile-link.active{
+    color:#04213a;
+    background:var(--accent);
+    padding:5px 6px;
+    font-weight:600;
+  }
+  .profile-links{flex:1;overflow:auto;}
 
-  /* Main */
-  .main{flex:1;display:flex;flex-direction:column;background:var(--main);position:relative}
-  .topbar{display:none;align-items:center;gap:10px;padding:8px 12px;background:#eef4f8;border-bottom:1px solid var(--border)}
-  .crumb{font-size:13px;color:#5a7689}
-  .crumb b{color:#183e53}
-  .period{margin-left:auto;color:#7b95a5;font-size:12px}
-  .subtabs{display:none;gap:4px;padding:8px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#e9f3f8,#eaf2f7)}
-  .tab{padding:8px 10px;border-radius:8px;border:1px solid #c8d9e4;background:#f0f7fb;color:#38586b;font-size:13px;cursor:pointer}
-  .tab.active{background:#1775a8;color:#fff;border-color:#166d9b}
-  .content{display:none;flex:1;overflow:auto;padding:12px}
-  .doc{background:var(--card);border:1px solid var(--border);border-radius:10px;min-height:280px;padding:16px 18px;color:#1b2a36;line-height:1.55}
-  .doc h3{margin:0 0 12px 0;border-bottom:1px solid #eef2f6;padding-bottom:8px;color:#183e53}
-  .placeholder{color:#688295}
-
-  /* Popup */
-  .popup{position:absolute;right:20px;top:20px;width:min(860px,70vw);height:min(560px,70vh);background:#fff;border:1px solid #cfd9e2;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.18);display:none;flex-direction:column;overflow:hidden;z-index:10}
-  .popup-header{display:flex;align-items:center;gap:10px;background:#10384e;color:#d6edf8;padding:10px 12px;border-bottom:1px solid #0b2a3a}
-  .popup-title{font-weight:700}
-  .popup-close{margin-left:auto;background:#0f2e40;color:#cfe7f3;border:1px solid #2c5f78;border-radius:8px;padding:6px 10px;cursor:pointer}
-  .popup-tabs{display:flex;gap:6px;padding:8px;background:#e9f2f7;border-bottom:1px solid #d7e4ed;flex-wrap:wrap}
-  .popup-tab{padding:6px 10px;border-radius:999px;border:1px solid #c9dbe6;background:#f6fbff;color:#2d5368;font-size:12px;cursor:pointer}
-  .popup-tab.active{background:#1775a8;color:#fff;border-color:#1775a8}
-  .popup-body{flex:1;overflow:auto;padding:12px}
-  .popup-card{background:#fff;border:1px solid #e3edf4;border-radius:10px;min-height:200px;padding:14px}
+  /* ---------- MAIN AREA ---------- */
+  .main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    background:#edf2fb;
+  }
+  .main-header{
+    background:#dbe3f0;
+    border-bottom:1px solid #c7d2e2;
+    padding:14px 24px 10px;
+  }
+  .breadcrumb{color:#24364f;font-size:15px;font-weight:600;margin-bottom:10px;min-height:24px;}
+  .subnav{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    padding-bottom:4px;
+    min-height:34px;
+  }
+  .subnav::-webkit-scrollbar{height:6px;}
+  .subnav::-webkit-scrollbar-thumb{background:#b5c5d8;border-radius:3px;}
+  .sub-btn{
+    border:none;
+    border-radius:6px;
+    padding:6px 12px;
+    background:#c7d4e6;
+    color:#2c405b;
+    font-size:12px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .sub-btn.active{
+    background:var(--accent-dark);
+    color:#fff;
+    font-weight:600;
+  }
+  .viewer{
+    flex:1;
+    padding:20px 24px;
+    overflow:auto;
+    background:linear-gradient(180deg,#fff 0%,#e6edf9 100%);
+  }
+  .document-panel{
+    background:#fff;
+    border-radius:12px;
+    border:1px solid #cfd8e6;
+    box-shadow:0 15px 30px rgba(16,43,83,.12);
+    padding:24px;
+    min-height:calc(100vh - 140px);
+    color:#1d2f45;
+    line-height:1.8;
+    white-space:pre-line;
+    overflow:auto;
+  }
 </style>
 </head>
 <body>
-<div id="app">
-  <!-- Left -->
-  <aside class="left">
-    <div class="search">
-      <div class="row">
-        <input id="searchInput" placeholder="환자번호" />
-        <button class="btn" id="btnSearch">검색</button>
+<div class="app">
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="search-row">
+      <span class="search-label">환자번호</span>
+      <div class="search-box">
+        <input id="patientInput" placeholder="환자번호를 입력하세요">
+        <button id="searchBtn">🔍</button>
       </div>
     </div>
-    <div class="patient" id="patientBox"><div style="color:#9fb7c3">환자번호를 검색하세요.</div></div>
-    <div class="timeline" id="timeline"></div>
+
+    <div id="patientCard" class="patient-card">
+      <div class="id-line" id="cardId"></div>
+      <div class="name-line" id="cardName"></div>
+      <div class="patient-meta">
+        <div>성별/나이: <span id="cardDemo"></span></div>
+        <div>혈액형: <span id="cardBlood"></span></div>
+        <div>주치의: <span id="cardDoctor"></span></div>
+      </div>
+    </div>
+
+    <div id="historyList" class="history-list"></div>
   </aside>
 
-  <!-- Rail -->
-  <aside class="rail">
-    <div class="rail-section" id="midBtns"></div>
-    <div class="divider"></div>
-    <div class="rail-section" id="profileMenu"></div>
-  </aside>
+  <!-- MIDDLE BAR -->
+  <div class="middle-bar">
+    <div class="area-buttons" id="areaButtons"></div>
+    <div class="profile-section">
+      <div class="profile-links" id="profileLinks"></div>
+    </div>
+  </div>
 
-  <!-- Main -->
+  <!-- MAIN -->
   <main class="main">
-    <div class="topbar" id="topbar">
-      <div class="crumb">선택: <b id="crumbDate">-</b> · <b id="crumbDept">-</b> · <b id="crumbMid">-</b></div>
-      <div class="period" id="periodText">기간: -</div>
+    <div class="main-header">
+      <div class="breadcrumb" id="breadcrumb"></div>
+      <div class="subnav" id="subNav"></div>
     </div>
-    <div class="subtabs" id="subtabs"></div>
-    <section class="content" id="content">
-      <div class="doc" id="doc"></div>
-    </section>
-
-    <!-- Popup -->
-    <div class="popup" id="popup">
-      <div class="popup-header">
-        <div class="popup-title" id="popupTitle">프로필</div>
-        <button class="popup-close" id="popupClose">닫기</button>
-      </div>
-      <div class="popup-tabs" id="popupTabs"></div>
-      <div class="popup-body">
-        <div class="popup-card" id="popupContent"></div>
-      </div>
+    <div class="viewer" id="viewer">
+      <div class="document-panel"></div>
     </div>
   </main>
 </div>
 
 <script>
-/* ---------------- 데이터(자리표시자) ---------------- */
-var midToSubs = {
-  "외래": ["처방","초진","재진"],
-  "병동": ["경과전체","의사처방","입원기록","임상관찰","수혈기록","영양기록","퇴원요약","협진기록","동의서","초기평가(일반)"],
-  "응급": ["의사처방","ER","간호기록","동의서","과거기록","응급실전문의기록","초기평가(응급)","임상관찰"],
-  "통합": ["경과전체","의사처방","입원기록","임상관찰","수혈기록","영양기록","퇴원요약","협진기록","동의서","초기평가(일반)"],
-  "다학제": ["다학제"]
-};
-var profileItems = ["OCS","환자정보","검사결과","PACS","CIS","상병이력","수술이력","타병원(외부)","처방조회","진료요약","통합치료요약","퇴원요약(전체)"];
+  const areaOrder=["외래","병동","응급","통합","다학제"];
+  const areaTemplates={
+    "외래":["처방","초진","재진"],
+    "병동":["경과전체","의사처방","입원기록","임상관찰","수혈기록","영양기록","퇴원요약","협진기록","동의서","간호기록","초기평가(일반)"],
+    "응급":["의사처방","ER","간호기록","동의서","과거기록","응급실전문의기록","초기평가(응급)","임상관찰"],
+    "통합":["경과전체","의사처방","입원기록","임상관찰","수혈기록","영양기록","퇴원요약","협진기록","동의서","간호기록","초기평가(일반)"],
+    "다학제":["다학제"]
+  };
+  const profileList=["OCS","환자정보","검사결과","PACS","CIS","상병이력","수술이력","타병원(외부)","처방조회","진료요약","통합치료계획","퇴원요약(전체)"];
 
-var patients = {
-  "01076990": {
-    id:"01076990", name:"홍길동", gender:"M", age:44, blood:"B+", attending:"김주치", period:"2025.10.17 ~ 2025.11.01",
-    episodes:[
-      {
-        date:"2025-11-11", dept:"외래", code:"NP",
-        records:{
-          "외래":{ "처방":"여기에 처방 내용 입력", "초진":"여기에 초진 내용 입력", "재진":"여기에 재진 내용 입력" },
-          "병동":{ "경과전체":"여기에 경과전체 내용 입력", "의사처방":"여기에 의사처방 내용 입력", "입원기록":"여기에 입원기록 내용 입력", "임상관찰":"여기에 임상관찰 내용 입력", "수혈기록":"여기에 수혈기록 내용 입력", "영양기록":"여기에 영양기록 내용 입력", "퇴원요약":"여기에 퇴원요약 내용 입력", "협진기록":"여기에 협진기록 내용 입력", "동의서":"여기에 동의서 내용 입력", "초기평가(일반)":"여기에 초기평가(일반) 내용 입력" },
-          "응급":{ "의사처방":"여기에 의사처방(응급) 내용 입력", "ER":"여기에 ER 내용 입력", "간호기록":"여기에 간호기록(응급) 내용 입력", "동의서":"여기에 동의서(응급) 내용 입력", "과거기록":"여기에 과거기록(응급) 내용 입력", "응급실전문의기록":"여기에 응급실전문의기록 내용 입력", "초기평가(응급)":"여기에 초기평가(응급) 내용 입력", "임상관찰":"여기에 임상관찰(응급) 내용 입력" },
-          "통합":{ "경과전체":"여기에 통합-경과전체 내용 입력" },
-          "다학제":{ "다학제":"여기에 다학제 내용 입력" }
+  const patients={
+    "01076990":{
+      id:"01076990",
+      name:"김진숙",
+      gender:"F",
+      age:44,
+      blood:"B+",
+      doctor:"김한열",
+      histories:[
+        {
+          key:"h1",
+          label:"2025-10-17 GE",
+          dept:"GE",
+          categories:{
+            "병동":{
+              "경과전체":"여기에 경과전체 내용 입력",
+              "의사처방":"여기에 의사처방 내용 입력",
+              "입원기록":"여기에 입원기록 내용 입력",
+              "임상관찰":"여기에 임상관찰 내용 입력",
+              "수혈기록":"여기에 수혈기록 내용 입력",
+              "영양기록":"여기에 영양기록 내용 입력",
+              "퇴원요약":"여기에 퇴원요약 내용 입력",
+              "협진기록":"여기에 협진기록 내용 입력",
+              "동의서":"여기에 동의서 내용 입력",
+              "간호기록":"여기에 간호기록 내용 입력",
+              "초기평가(일반)":"여기에 초기평가 내용 입력"
+            },
+            "응급":{
+              "의사처방":"응급 의사처방 예시",
+              "ER":"ER 기록 예시",
+              "간호기록":"간호기록 예시",
+              "동의서":"응급 동의서 예시",
+              "과거기록":"과거기록 예시",
+              "응급실전문의기록":"전문의 기록 예시",
+              "초기평가(응급)":"응급 초기평가 예시",
+              "임상관찰":"응급 임상관찰 예시"
+            },
+            "외래":{
+              "처방":"외래 처방 메모",
+              "초진":"초진 기록",
+              "재진":"재진 기록"
+            },
+            "통합":{
+              "경과전체":"통합 경과 전체",
+              "의사처방":"통합 의사처방",
+              "입원기록":"통합 입원 기록",
+              "임상관찰":"통합 임상관찰",
+              "수혈기록":"통합 수혈기록",
+              "영양기록":"통합 영양기록",
+              "퇴원요약":"통합 퇴원요약",
+              "협진기록":"통합 협진기록",
+              "동의서":"통합 동의서",
+              "간호기록":"통합 간호기록",
+              "초기평가(일반)":"통합 초기평가"
+            },
+            "다학제":{
+              "다학제":"다학제 회의 노트"
+            }
+          }
+        },
+        {
+          key:"h2",
+          label:"2025-08-01 NR",
+          dept:"NR",
+          categories:{
+            "병동":{
+              "경과전체":"다른 날짜 경과",
+              "퇴원요약":"다른 날짜 퇴원요약"
+            },
+            "외래":{
+              "재진":"NR 재진 기록"
+            }
+          }
         }
-      },
-      {
-        date:"2025-10-17", dept:"GE", code:"GE",
-        records:{
-          "병동":{ "경과전체":"여기에 경과전체 내용 입력(10/17)", "의사처방":"여기에 의사처방 내용 입력", "입원기록":"여기에 입원기록 내용 입력" },
-          "응급":{ "ER":"여기에 ER 내용 입력(10/17)" },
-          "외래":{ "처방":"여기에 처방 내용 입력(10/17)" }
-        }
+      ],
+      profiles:{
+        "OCS":"김진숙 OCS 내용",
+        "환자정보":"김진숙 환자정보",
+        "검사결과":"김진숙 검사결과",
+        "PACS":"PACS 자리",
+        "CIS":"CIS 내용",
+        "상병이력":"상병이력",
+        "수술이력":"수술이력 없음",
+        "타병원(외부)":"외부 기록",
+        "처방조회":"처방조회 내용",
+        "진료요약":"진료요약",
+        "통합치료계획":"통합치료계획",
+        "퇴원요약(전체)":"전체 퇴원요약"
       }
-    ],
-    profiles:{
-      "OCS":"여기에 OCS 내용 입력","환자정보":"여기에 환자정보 내용 입력","검사결과":"여기에 검사결과 내용 입력","PACS":"여기에 PACS 내용 입력","CIS":"여기에 CIS 내용 입력","상병이력":"여기에 상병이력 내용 입력","수술이력":"여기에 수술이력 내용 입력","타병원(외부)":"여기에 타병원(외부) 내용 입력","처방조회":"여기에 처방조회 내용 입력","진료요약":"여기에 진료요약 내용 입력","통합치료요약":"여기에 통합치료요약 내용 입력","퇴원요약(전체)":"여기에 퇴원요약(전체) 내용 입력"
+    },
+    "02034412":{
+      id:"02034412",
+      name:"홍가율",
+      gender:"M",
+      age:56,
+      blood:"A-",
+      doctor:"윤정훈",
+      histories:[
+        {
+          key:"h3",
+          label:"2025-09-15 CS",
+          dept:"CS",
+          categories:{
+            "병동":{
+              "경과전체":"홍가율 병동 경과 기록",
+              "임상관찰":"홍가율 임상관찰",
+              "수혈기록":"홍가율 수혈",
+              "영양기록":"홍가율 영양기록",
+              "퇴원요약":"홍가율 퇴원요약",
+              "협진기록":"홍가율 협진",
+              "동의서":"홍가율 동의서",
+              "간호기록":"홍가율 간호기록",
+              "초기평가(일반)":"홍가율 초기평가",
+              "의사처방":"홍가율 의사처방",
+              "입원기록":"홍가율 입원기록"
+            },
+            "통합":{
+              "경과전체":"통합 경과",
+              "의사처방":"통합 처방",
+              "입원기록":"통합 입원",
+              "임상관찰":"통합 관찰",
+              "수혈기록":"통합 수혈",
+              "영양기록":"통합 영양",
+              "퇴원요약":"통합 퇴원",
+              "협진기록":"통합 협진",
+              "동의서":"통합 동의서",
+              "간호기록":"통합 간호기록",
+              "초기평가(일반)":"통합 초기평가"
+            }
+          }
+        }
+      ],
+      profiles:{
+        "OCS":"홍가율 OCS",
+        "환자정보":"홍가율 정보",
+        "검사결과":"홍가율 검사",
+        "PACS":"홍가율 PACS",
+        "CIS":"홍가율 CIS",
+        "상병이력":"홍가율 상병",
+        "수술이력":"홍가율 수술",
+        "타병원(외부)":"홍가율 외부",
+        "처방조회":"홍가율 처방조회",
+        "진료요약":"홍가율 요약",
+        "통합치료계획":"홍가율 통합치료계획",
+        "퇴원요약(전체)":"홍가율 퇴원 전체"
+      }
+    },
+    "03128855":{
+      id:"03128855",
+      name:"최단비",
+      gender:"F",
+      age:33,
+      blood:"O+",
+      doctor:"박준영",
+      histories:[
+        {
+          key:"h4",
+          label:"2024-12-12 ER",
+          dept:"ER",
+          categories:{
+            "응급":{
+              "의사처방":"최단비 응급 처방",
+              "ER":"최단비 ER 내용",
+              "간호기록":"최단비 간호기록",
+              "동의서":"최단비 동의서",
+              "과거기록":"최단비 과거기록",
+              "응급실전문의기록":"전문의 기록",
+              "초기평가(응급)":"응급 초기평가",
+              "임상관찰":"응급 임상관찰"
+            },
+            "다학제":{
+              "다학제":"최단비 다학제 노트"
+            }
+          }
+        }
+      ],
+      profiles:{
+        "OCS":"최단비 OCS",
+        "환자정보":"최단비 정보",
+        "검사결과":"최단비 검사결과",
+        "PACS":"최단비 PACS",
+        "CIS":"최단비 CIS",
+        "상병이력":"최단비 상병",
+        "수술이력":"최단비 수술",
+        "타병원(외부)":"최단비 외부",
+        "처방조회":"최단비 처방조회",
+        "진료요약":"최단비 요약",
+        "통합치료계획":"최단비 통합치료계획",
+        "퇴원요약(전체)":"최단비 퇴원 전체"
+      }
     }
-  },
-  "02000002":{
-    id:"02000002", name:"이샘플", gender:"F", age:58, blood:"A+", attending:"박주치", period:"2024.08.01 ~ 2024.08.20",
-    episodes:[
-      {date:"2024-08-11", dept:"응급", code:"ER", records:{ "응급":{"ER":"여기에 ER 내용 입력(2024-08-11)"} }},
-      {date:"2024-08-01", dept:"외래", code:"OP", records:{ "외래":{"초진":"여기에 초진 내용 입력(2024-08-01)"} }}
-    ],
-    profiles:{
-      "OCS":"OCS 예시","환자정보":"환자정보 예시","검사결과":"검사결과 예시","PACS":"PACS 예시","CIS":"CIS 예시","상병이력":"상병이력 예시","수술이력":"수술이력 예시","타병원(외부)":"타병원 예시","처방조회":"처방조회 예시","진료요약":"진료요약 예시","통합치료요약":"통합치료요약 예시","퇴원요약(전체)":"퇴원요약 예시"
-    }
-  }
-};
+  };
 
-/* ---------------- 상태 ---------------- */
-var currentPatient = null;
-var currentEpisodeIndex = null;
-var currentMid = null;
-var currentSub = null;
-var popupActiveTab = null;
-
-/* ---------------- 엘리먼트 ---------------- */
-var midContainer = document.getElementById('midBtns');
-var profileContainer = document.getElementById('profileMenu');
-var timelineEl = document.getElementById('timeline');
-var patientBox = document.getElementById('patientBox');
-var topbar = document.getElementById('topbar');
-var subtabs = document.getElementById('subtabs');
-var content = document.getElementById('content');
-var docEl = document.getElementById('doc');
-var crumbDate = document.getElementById('crumbDate');
-var crumbDept = document.getElementById('crumbDept');
-var crumbMid = document.getElementById('crumbMid');
-var periodText = document.getElementById('periodText');
-var popup = document.getElementById('popup');
-var popupTitle = document.getElementById('popupTitle');
-var popupTabs = document.getElementById('popupTabs');
-var popupContent = document.getElementById('popupContent');
-
-/* ---------------- UI 빌드 ---------------- */
-function buildMidButtons(){
-  midContainer.innerHTML = "";
-  var mids = Object.keys(midToSubs);
-  for(var i=0;i<mids.length;i++){
-    var m = mids[i];
-    var b=document.createElement('button');
-    b.className='rail-btn';
-    b.textContent=m;
-    b.onclick=function(ev){
-      var label = ev.currentTarget.textContent;
-      if(!currentPatient || currentEpisodeIndex===null){ alert('날짜(대분류)를 먼저 선택하세요.'); return; }
-      selectMid(label);
-    };
-    midContainer.appendChild(b);
+  function normalizeData(){
+    Object.values(patients).forEach(patient=>{
+      patient.histories.forEach(history=>{
+        Object.entries(history.categories).forEach(([area,details])=>{
+          (areaTemplates[area]||[]).forEach(name=>{
+            if(!details[name]) details[name]=`${history.label} ▸ ${area} ▸ ${name} 내용이 없습니다.`;
+          });
+        });
+      });
+      profileList.forEach(name=>{
+        if(!patient.profiles[name]) patient.profiles[name]=`${patient.name} ▸ ${name} 내용이 없습니다.`;
+      });
+    });
   }
-}
-function buildProfileButtons(){
-  profileContainer.innerHTML = "";
-  for(var i=0;i<profileItems.length;i++){
-    var p=profileItems[i];
-    var b=document.createElement('button');
-    b.className='rail-btn';
-    b.textContent=p;
-    b.onclick=function(ev){ openProfile(ev.currentTarget.textContent); };
-    profileContainer.appendChild(b);
-  }
-}
+  normalizeData();
 
-/* ---------------- 검색/로드 ---------------- */
-function doSearch(){
-  var id = (document.getElementById('searchInput').value||"").trim();
-  var p = patients[id];
-  if(!p){
-    currentPatient=null; currentEpisodeIndex=null; currentMid=null; currentSub=null;
-    patientBox.innerHTML='<div style="color:#9fb7c3">검색 결과가 없습니다.</div>';
-    timelineEl.innerHTML='';
-    topbar.style.display='none';
-    content.style.display='none';
-    subtabs.style.display='none';
-    return;
-  }
-  currentPatient = p;
-  currentEpisodeIndex=null; currentMid=null; currentSub=null;
-  renderPatientHeader(p);
-  renderTimeline(p);
-  topbar.style.display='none';
-  content.style.display='none';
-  subtabs.style.display='none';
-}
-function renderPatientHeader(p){
-  patientBox.innerHTML = '<div class="name">'+p.name+' <span style="color:#9fb7c3;font-weight:400">('+p.id+')</span></div>'
-    + '<div class="meta">'
-    + '<span>'+(p.gender==='M'?'M':'F')+'/'+p.age+'세</span>'
-    + '<span>혈액형 '+p.blood+'</span>'
-    + '<span>주치의 '+p.attending+'</span>'
-    + '<span style="color:#9fb7c3">기간: '+(p.period||'-')+'</span>'
-    + '</div>';
-}
-function renderTimeline(p){
-  var eps = p.episodes.slice().sort(function(a,b){ return a.date<b.date?1:-1; });
-  p._sortedEpisodes = eps;
-  timelineEl.innerHTML='';
-  var lastYear = null;
-  for(var i=0;i<eps.length;i++){
-    var ep = eps[i];
-    var y = ep.date.substring(0,4);
-    if(y!==lastYear){
-      var yEl = document.createElement('div'); yEl.className='year'; yEl.textContent=y;
-      timelineEl.appendChild(yEl); lastYear = y;
-    }
-    var item = document.createElement('div'); item.className='tl-item'; item.setAttribute('data-index',i);
-    item.innerHTML = '<div class="dot"></div>'
-      + '<div class="tl-main"><div class="tl-top"><div class="date">'+ep.date+'</div><div class="badge">'+ep.code+'</div></div>'
-      + '<div class="tl-sub">'+ep.dept+'</div></div>';
-    item.onclick = (function(idx, el){ return function(){ selectEpisode(idx, el); };})(i, item);
-    timelineEl.appendChild(item);
-  }
-}
-function selectEpisode(idx, itemEl){
-  currentEpisodeIndex = idx;
-  currentMid=null; currentSub=null;
-  var nodes = timelineEl.querySelectorAll('.tl-item');
-  for(var i=0;i<nodes.length;i++){ nodes[i].classList.remove('active'); }
-  itemEl.classList.add('active');
-  updateTopBar();
-  content.style.display='none';
-  subtabs.style.display='none';
-}
+  let currentPatient=null;
+  let currentHistory=null;
+  let currentArea=null;
+  let currentDetail=null;
+  let activeProfile=null;
 
-/* ---------------- 상단/소분류/내용 ---------------- */
-function updateTopBar(){
-  if(!currentPatient || currentEpisodeIndex===null){ topbar.style.display='none'; return; }
-  var ep = currentPatient._sortedEpisodes[currentEpisodeIndex];
-  crumbDate.textContent = ep.date;
-  crumbDept.textContent = ep.code;
-  crumbMid.textContent = currentMid?currentMid:'-';
-  var next = currentPatient._sortedEpisodes[currentEpisodeIndex-1];
-  periodText.textContent = '기간: '+ep.date+' ~ '+(next?('다음 진료일 전('+next.date+' 이전)'):'다음 진료일 전');
-  topbar.style.display='flex';
-}
-function selectMid(mid){
-  currentMid = mid;
-  currentSub = midToSubs[mid][0];
-  // 버튼 active
-  var btns = midContainer.querySelectorAll('.rail-btn');
-  for(var i=0;i<btns.length;i++){ btns[i].classList.toggle('active', btns[i].textContent===mid); }
-  buildSubtabs();
-  renderContent();
-  updateTopBar();
-}
-function buildSubtabs(){
-  subtabs.innerHTML='';
-  var subs = midToSubs[currentMid] || [];
-  for(var i=0;i<subs.length;i++){
-    (function(s){
-      var t=document.createElement('button'); t.className='tab'+(s===currentSub?' active':''); t.textContent=s;
-      t.onclick=function(){ currentSub=s; buildSubtabs(); renderContent(); updateTopBar(); };
-      subtabs.appendChild(t);
-    })(subs[i]);
-  }
-  subtabs.style.display='flex';
-}
-function renderContent(){
-  var ep = currentPatient._sortedEpisodes[currentEpisodeIndex];
-  var txt = '여기에 '+currentSub+' 내용 입력';
-  if(ep && ep.records && ep.records[currentMid] && ep.records[currentMid][currentSub]){
-    txt = ep.records[currentMid][currentSub];
-  }
-  docEl.innerHTML = '<h3>'+currentMid+' · '+currentSub+'</h3><div class="placeholder">'+txt+'</div>';
-  content.style.display='flex';
-}
+  const patientInput=document.getElementById("patientInput");
+  const searchBtn=document.getElementById("searchBtn");
+  const historyList=document.getElementById("historyList");
+  const areaButtons=document.getElementById("areaButtons");
+  const profileLinks=document.getElementById("profileLinks");
+  const subNav=document.getElementById("subNav");
+  const breadcrumb=document.getElementById("breadcrumb");
+  const viewer=document.getElementById("viewer");
+  const patientCard=document.getElementById("patientCard");
+  const cardId=document.getElementById("cardId");
+  const cardName=document.getElementById("cardName");
+  const cardDemo=document.getElementById("cardDemo");
+  const cardBlood=document.getElementById("cardBlood");
+  const cardDoctor=document.getElementById("cardDoctor");
 
-/* ---------------- 프로필 팝업 ---------------- */
-function buildPopupTabs(active){
-  popupTabs.innerHTML='';
-  for(var i=0;i<profileItems.length;i++){
-    (function(name){
-      var b=document.createElement('button');
-      b.className='popup-tab'+(name===active?' active':'');
-      b.textContent=name;
-      b.onclick=function(){ openProfile(name,true); };
-      popupTabs.appendChild(b);
-    })(profileItems[i]);
+  function updateBreadcrumb(){
+    if(!currentPatient){breadcrumb.textContent="";return;}
+    if(activeProfile){breadcrumb.textContent=`${currentPatient.name} ▸ ${activeProfile}`;return;}
+    const parts=[currentPatient.name];
+    if(currentHistory) parts.push(currentHistory.label);
+    if(currentArea) parts.push(currentArea);
+    if(currentDetail) parts.push(currentDetail);
+    breadcrumb.textContent=parts.join(" ▸ ");
   }
-}
-function openProfile(name, keepOpen){
-  if(!currentPatient){ alert('먼저 환자번호를 검색하세요.'); return; }
-  popupActiveTab=name;
-  popupTitle.textContent = name;
-  buildPopupTabs(name);
-  var txt = (currentPatient.profiles && currentPatient.profiles[name]) ? currentPatient.profiles[name] : ('여기에 '+name+' 내용 입력');
-  popupContent.textContent = txt;
-  popup.style.display='flex';
-}
-document.getElementById('popupClose').onclick=function(){ popup.style.display='none'; };
 
-/* ---------------- 이벤트 ---------------- */
-document.getElementById('btnSearch').onclick=doSearch;
-document.getElementById('searchInput').addEventListener('keydown',function(e){ if(e.key==='Enter'){ doSearch(); }});
+  function showViewer(text=""){
+    viewer.innerHTML=`<div class="document-panel">${text}</div>`;
+  }
 
-/* ---------------- 초기 셋업 ---------------- */
-buildMidButtons();
-buildProfileButtons();
-// 데모용: 자동 로드
-document.getElementById('searchInput').value='01076990';
-doSearch();
+  function renderHistories(){
+    historyList.innerHTML="";
+    if(!currentPatient) return;
+    currentPatient.histories.forEach(hist=>{
+      const div=document.createElement("div");
+      div.className="history-item";
+      if(currentHistory && hist.key===currentHistory.key) div.classList.add("active");
+      div.innerHTML=`<div class="history-date">${hist.label}</div>
+                     <div class="history-dept">${hist.dept}</div>`;
+      div.onclick=()=>{
+        currentHistory=hist;
+        currentArea=null;
+        currentDetail=null;
+        activeProfile=null;
+        renderHistories();
+        renderAreas();
+        renderProfiles();
+        renderSubNav();
+        updateBreadcrumb();
+        showViewer();
+      };
+      historyList.appendChild(div);
+    });
+  }
+
+  function renderAreas(){
+    areaButtons.innerHTML="";
+    areaOrder.forEach(area=>{
+      const btn=document.createElement("button");
+      btn.className="area-btn";
+      btn.textContent=area;
+      const enabled=currentHistory && currentHistory.categories[area];
+      if(!enabled) btn.classList.add("disabled");
+      if(currentArea===area && !activeProfile) btn.classList.add("active");
+      btn.onclick=()=>{
+        if(!enabled) return;
+        activeProfile=null;
+        currentArea=area;
+        const details=currentHistory.categories[area];
+        currentDetail=Object.keys(details)[0]||null;
+        renderAreas();
+        renderProfiles();
+        renderSubNav();
+        if(currentDetail) showViewer(details[currentDetail]); else showViewer();
+        updateBreadcrumb();
+      };
+      areaButtons.appendChild(btn);
+    });
+  }
+
+  function renderProfiles(){
+    profileLinks.innerHTML="";
+    if(!currentPatient) return;
+    profileList.forEach(name=>{
+      const div=document.createElement("div");
+      div.className="profile-link";
+      if(activeProfile===name) div.classList.add("active");
+      div.textContent=name;
+      div.onclick=()=>{
+        if(!currentPatient) return;
+        activeProfile=name;
+        currentArea=null;
+        currentDetail=null;
+        renderAreas();
+        renderProfiles();
+        renderSubNav();
+        updateBreadcrumb();
+        showViewer(currentPatient.profiles[name]);
+      };
+      profileLinks.appendChild(div);
+    });
+  }
+
+  function renderSubNav(){
+    subNav.innerHTML="";
+    if(activeProfile || !currentArea || !currentHistory) return;
+    const details=currentHistory.categories[currentArea];
+    Object.keys(details).forEach(name=>{
+      const btn=document.createElement("button");
+      btn.className="sub-btn";
+      btn.textContent=name;
+      if(currentDetail===name) btn.classList.add("active");
+      btn.onclick=()=>{
+        currentDetail=name;
+        renderSubNav();
+        showViewer(details[name]);
+        updateBreadcrumb();
+      };
+      subNav.appendChild(btn);
+    });
+  }
+
+  function populateCard(){
+    cardId.textContent=`환자번호 ${currentPatient.id}`;
+    cardName.textContent=currentPatient.name;
+    cardDemo.textContent=`${currentPatient.gender}/${currentPatient.age}세`;
+    cardBlood.textContent=currentPatient.blood;
+    cardDoctor.textContent=currentPatient.doctor;
+    patientCard.classList.add("active");
+  }
+
+  function handleSearch(){
+    const id=patientInput.value.trim();
+    const target=patients[id];
+    if(!target){alert("등록된 환자가 없습니다.");return;}
+    currentPatient=target;
+    currentHistory=null;
+    currentArea=null;
+    currentDetail=null;
+    activeProfile=null;
+    populateCard();
+    renderHistories();
+    renderAreas();
+    renderProfiles();
+    renderSubNav();
+    updateBreadcrumb();
+    showViewer();
+  }
+
+  searchBtn.onclick=handleSearch;
+  patientInput.addEventListener("keyup",e=>{if(e.key==="Enter") handleSearch();});
+  showViewer();
 </script>
 </body>
 </html>
